@@ -2,9 +2,8 @@ enchant();
 
 var checked = 0;
 var stage = 1;
-var board, bar, game,
+var board, bar, game, scoreGroup, boardGroup,
     score = 0, time = 0, rest = 400, size = 24;
-
 
 var stages = {
     1: {width: 8, height: 8, bonus: 100},
@@ -20,9 +19,13 @@ var stages = {
 };
 
 window.onload = function() {
-    game = new Game(320, 320);
+    game = new Core(320, 320);
     game.fps = 20;
     game.preload('fruits.png', 'bar.png', 'se2.wav', 'se6.wav', 'se7.wav', 'lock2.wav', 'jingle03.wav', 'bomb2.wav', 'bomb3.wav');
+    scoreGroup = new Group();
+    boardGroup = new Group();
+    game.rootScene.addChild(boardGroup);
+    game.rootScene.addChild(scoreGroup);
 
     game.onload = function() {
         resetBoard();
@@ -33,19 +36,18 @@ window.onload = function() {
         rest = Math.max(0, rest);
         bar.width = rest / 2;
 
-        game.rootScene.addChild(bar);
+        scoreGroup.addChild(bar);
         game.texts = [];
         game.pinch = false;
 
         game.texts.score = new MutableText(16, 8, game.width, "Score:" + score);
-        game.rootScene.addChild(game.texts.score);
+        scoreGroup.addChild(game.texts.score);
 
         game.texts.time = new MutableText(16, 24, game.width, "Time:" + (rest / game.fps).toFixed(2) + 's');
-        game.rootScene.addChild(game.texts.time);
+        scoreGroup.addChild(game.texts.time);
 
         game.texts.bonus = new MutableText(16, 56, game.width, "");
-        game.rootScene.addChild(game.texts.bonus);
-
+        scoreGroup.addChild(game.texts.bonus);
 
         game.timer = [];
     };
@@ -72,14 +74,14 @@ window.onload = function() {
                 }
             }
 
-            time++;
-            rest--;
+            time ++;
+            rest --;
             rest = Math.min(rest, 400);
             bar.width = rest / 2;
             game.texts.time.setText("Time: " + (rest / game.fps).toFixed(2));
             game.texts.score.setText("Score: " + score);
 
-            if (rest <= 0) {
+            if (rest == 0) {
                 game.end(score, 'スコア: ' + score);
                 game.assets['bomb3.wav'].play();
             }
@@ -103,7 +105,7 @@ function setBonus(bonus, time) {
 function clearBoard() {
     for (var p in board) {
         for (var q in board[p]) {
-            game.rootScene.removeChild(board[p][q]);
+            boardGroup.removeChild(board[p][q]);
         }
     }
 }
@@ -148,7 +150,7 @@ function resetBoard() {
 //                if(true){
                 board[i][j].frame = 0;
             }
-            game.rootScene.addChild(board[i][j]);
+            boardGroup.addChild(board[i][j]);
             board[i][j].update = function() {
                 this.target.x = this.i * size + 5;
                 this.target.y = 320 - (this.j + 1) * size;
@@ -206,7 +208,7 @@ function click(i, j) {
                 } else {
                     for (var q = height - 1; q >= 0; q--) {
                         if (board[p][q] && board[p][q].checked) {
-                            game.rootScene.removeChild(board[p][q]);
+                            boardGroup.removeChild(board[p][q]);
                             board[p].splice(q, 1);
                         }
                     }
@@ -214,7 +216,7 @@ function click(i, j) {
             }
         }
 
-        var newBoard = new Array();
+        var newBoard = [];
         for (var p = 0; p < width; p++) {
             if (board[p] && board[p].length > 0) {
                 for (var q in board[p]) {
@@ -228,7 +230,7 @@ function click(i, j) {
         newBoard = []
 
         for (var p in board) {
-            newBoard[p] = new Array();
+            newBoard[p] = [];
             for (var q = 0; q < height; q++) {
                 if (board[p][q]) {
                     newBoard[p].push(board[p][q]);
